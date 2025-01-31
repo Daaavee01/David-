@@ -1,0 +1,106 @@
+// Define pins for Ultrasonic Sensor
+#define TRIG_PIN 9
+#define ECHO_PIN 10
+
+// Define pins for Motor Driver
+#define ENA 5   // Enable pin for Motor A
+#define ENB 6   // Enable pin for Motor B
+#define IN1 7   // Motor A Input 1
+#define IN2 8   // Motor A Input 2
+#define IN3 11  // Motor B Input 1
+#define IN4 12  // Motor B Input 2
+
+// Define pins for Infrared Sensors
+#define IR_LEFT A0
+#define IR_RIGHT A1
+
+void setup() {
+  // Initialize Serial Monitor
+  Serial.begin(9600);
+
+  // Setup Motor Driver pins as output
+  pinMode(ENA, OUTPUT);
+  pinMode(ENB, OUTPUT);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+
+  // Setup Ultrasonic Sensor pins
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+
+  // Setup Infrared Sensor pins
+  pinMode(IR_LEFT, INPUT);
+  pinMode(IR_RIGHT, INPUT);
+}
+
+long getDistance() {
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+  long duration = pulseIn(ECHO_PIN, HIGH);
+  return duration * 0.034 / 2; // Convert to cm
+}
+
+void moveForward() {
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+  analogWrite(ENA, 150);
+  analogWrite(ENB, 150);
+}
+
+void turnLeft() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+  analogWrite(ENA, 150);
+  analogWrite(ENB, 150);
+}
+
+void turnRight() {
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+  analogWrite(ENA, 150);
+  analogWrite(ENB, 150);
+}
+
+void stopMotors() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+}
+
+void loop() {
+  long distance = getDistance();
+  int leftObstacle = digitalRead(IR_LEFT);
+  int rightObstacle = digitalRead(IR_RIGHT);
+
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.print(" cm, Left IR: ");
+  Serial.print(leftObstacle);
+  Serial.print(", Right IR: ");
+  Serial.println(rightObstacle);
+
+  if (distance > 20 && leftObstacle == HIGH && rightObstacle == HIGH) {
+    moveForward();
+  } else if (leftObstacle == LOW) {
+    turnRight();
+  } else if (rightObstacle == LOW) {
+    turnLeft();
+  } else {
+    stopMotors();
+  }
+
+  delay(100);
+}
